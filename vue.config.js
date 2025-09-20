@@ -36,14 +36,24 @@ module.exports = {
       warnings: false,
       errors: true
     },
-    before: require('./mock/mock-server.js')
-    // proxy: {
-    //   '/api': {
-    //     target: 'http://localhost:8080"', // 你的真实后端 API 基础地址
-    //     changeOrigin: true, // 开启反向代理
-    //     secure: false
-    //   }
-    // }
+    before: require("./mock/mock-server.js"),
+    proxy: {
+      "/dev-api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+        secure: false,
+        logLevel: "debug", // 添加日志以便调试
+        onProxyReq: (proxyReq, req, res) => {
+          // 确保 POST 请求体被正确转发
+          if (req.body) {
+            let bodyData = JSON.stringify(req.body);
+            proxyReq.setHeader("Content-Type", "application/json");
+            proxyReq.setHeader("Content-Length", Buffer.byteLength(bodyData));
+            proxyReq.write(bodyData);
+          }
+        },
+      },
+    },
   },
   configureWebpack: {
     // provide the app's title in webpack's name field, so that
@@ -87,7 +97,7 @@ module.exports = {
       })
       .end()
 
-    config
+      config
       .when(process.env.NODE_ENV !== 'development',
         config => {
           config
@@ -101,28 +111,28 @@ module.exports = {
           config
             .optimization.splitChunks({
               chunks: 'all',
-              cacheGroups: {
-                libs: {
+        cacheGroups: {
+          libs: {
                   name: 'chunk-libs',
-                  test: /[\\/]node_modules[\\/]/,
-                  priority: 10,
+            test: /[\\/]node_modules[\\/]/,
+            priority: 10,
                   chunks: 'initial' // only package third parties that are initially dependent
-                },
-                elementUI: {
+          },
+          elementUI: {
                   name: 'chunk-elementUI', // split elementUI into a single package
-                  priority: 20, // the weight needs to be larger than libs and app or it will be packaged into libs or app
+            priority: 20, // the weight needs to be larger than libs and app or it will be packaged into libs or app
                   test: /[\\/]node_modules[\\/]_?element-ui(.*)/ // in order to adapt to cnpm
-                },
-                commons: {
+          },
+          commons: {
                   name: 'chunk-commons',
                   test: resolve('src/components'), // can customize your rules
-                  minChunks: 3, //  minimum common number
-                  priority: 5,
+            minChunks: 3, //  minimum common number
+            priority: 5,
                   reuseExistingChunk: true
                 }
               }
             })
-          // https:// webpack.js.org/configuration/optimization/#optimizationruntimechunk
+      // https:// webpack.js.org/configuration/optimization/#optimizationruntimechunk
           config.optimization.runtimeChunk('single')
         }
       )
