@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-input v-model="listQuery.title" placeholder="Title" style="width: 300px;margin-right:15px;" class="filter-item" @keyup.enter.native="handleFilter" />
+      <el-input v-model="filter.title" placeholder="Title" style="width: 300px;margin-right:15px;" class="filter-item"/>
       <el-button v-waves class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
         Search
       </el-button>
@@ -30,7 +30,7 @@
       <el-table-column label="发行日期" align="center" width="200">
         <template slot-scope="scope">
           <i class="el-icon-time" />
-          <span>{{ scope.row.issueDate }}</span>
+          <span>{{ scope.row.issue_date }}</span>
         </template>
       </el-table-column>
       <el-table-column label="Actions" align="center" width="230" class-name="small-padding fixed-width">
@@ -44,6 +44,15 @@
         </template>
       </el-table-column>
     </el-table>
+    <el-pagination
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :current-page.sync="pagination.page"
+      :page-sizes="[10, 20, 50]"
+      :page-size.sync="pagination.size"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="pagination.total"> 
+    </el-pagination>
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="90px" style="width: 400px; margin-left:50px;">
@@ -85,16 +94,22 @@ export default {
   },
   data() {
     return {
+      pagination: {
+          page: 1,
+          size: 10,
+          total: 0,
+          sorts: [
+            {
+              field: "issueDate",
+              order: "desc"
+            }
+          ],
+      },
+      filter: {
+          title: "",
+      },
       list: null,
       listLoading: true,
-      listQuery: {
-        page: 1,
-        limit: 20,
-        importance: undefined,
-        title: undefined,
-        type: undefined,
-        sort: '+id'
-      },
       temp: {
         title: '',
         author: '',
@@ -114,8 +129,9 @@ export default {
   methods: {
     fetchData() {
       this.listLoading = true
-      fetchList(this.listQuery).then(response => {
-        this.list = response.data.items
+      fetchList(this.pagination).then(response => {
+        this.list = response.data.list
+        this.pagination.total = response.data.total
         this.listLoading = false
       })
     },
@@ -187,6 +203,12 @@ export default {
       })
       this.list.splice(index, 1)
     },
+    handleSizeChange(val) {
+      this.fetchData()
+    },
+    handleCurrentChange(val) {
+      this.fetchData()
+    }
   }
 }
 </script>

@@ -1,11 +1,10 @@
 import request from '@/utils/request'
 
 export function fetchList(query) {
-  return request({
-    url: "/article/list",
-    method: "get",
-    params: query,
-  });
+  return request.post(
+    "v1/article/list",
+    query,
+  );
 }
 
 export function fetchArticle(id) {
