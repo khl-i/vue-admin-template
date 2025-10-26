@@ -159,15 +159,24 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           this.temp.issue_date = this.formatDate(this.temp.issue_date)
-          createArticle(this.temp).then(() => {
-            this.list.unshift(this.temp)
-            this.dialogFormVisible = false
-            this.$notify({
-              title: 'Success',
-              message: 'Created Successfully',
-              type: 'success',
-              duration: 2000
-            })
+          createArticle(this.temp).then((response) => {
+            if (response.success) {
+              this.list.unshift(response.data)
+              this.dialogFormVisible = false
+              this.$notify({
+                title: 'Success',
+                message: 'Created Successfully',
+                type: 'success',
+                duration: 2000
+              })
+            } else {
+              this.$notify({
+                title: 'Error',
+                message: response.message,
+                type: 'error',
+                duration: 2000
+              })
+            }
           })
         }
       })
