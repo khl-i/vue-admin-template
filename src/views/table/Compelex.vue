@@ -161,7 +161,6 @@ export default {
           this.temp.issue_date = this.formatDate(this.temp.issue_date)
           createArticle(this.temp).then((response) => {
             if (response.success) {
-              this.list.unshift(response.data)
               this.dialogFormVisible = false
               this.$notify({
                 title: 'Success',
@@ -169,6 +168,7 @@ export default {
                 type: 'success',
                 duration: 2000
               })
+              this.fetchData()
             } else {
               this.$notify({
                 title: 'Error',
