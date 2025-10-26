@@ -17,12 +17,12 @@
       fit
       highlight-current-row
     >
-      <el-table-column label="Title">
+      <el-table-column label="标题">
         <template slot-scope="scope">
           {{ scope.row.title }}
         </template>
       </el-table-column>
-      <el-table-column label="Author" width="110" align="center">
+      <el-table-column label="作者" width="110" align="center">
         <template slot-scope="scope">
           <span>{{ scope.row.author }}</span>
         </template>
@@ -33,7 +33,7 @@
           <span>{{ scope.row.issue_date }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="Actions" align="center" width="230" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
         <template slot-scope="{row,$index}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             Edit
@@ -56,14 +56,18 @@
 
     <el-dialog :title="textMap[dialogStatus]" :visible.sync="dialogFormVisible">
       <el-form ref="dataForm" :rules="rules" :model="temp" label-position="left" label-width="90px" style="width: 400px; margin-left:50px;">
-        <el-form-item label="Title" prop="title">
+        <el-form-item label="标题" prop="title">
           <el-input v-model="temp.title" />
         </el-form-item>
-        <el-form-item label="Author" prop="author">
+        <el-form-item label="作者" prop="author">
           <el-input v-model="temp.author" />
         </el-form-item>
-        <el-form-item label="issueDate" prop="issueDate">
-          <el-date-picker v-model="temp.issueDate" type="datetime" placeholder="Please pick a date" />
+        <el-form-item label="发行日期" prop="issue_date">
+          <el-date-picker 
+            v-model="temp.issue_date" 
+            type="datetime" 
+            placeholder="Please pick a date" 
+          />
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
@@ -79,7 +83,8 @@
 </template>
 
 <script>
-import { createArticle, updateArticle, fetchList } from '@/api/article'
+import { createArticle, updateArticle, fetchList, deleteArticle } from '@/api/article'
+import dayjs from 'dayjs'
 
 export default {
   filters: {
@@ -100,7 +105,7 @@ export default {
           total: 0,
           sorts: [
             {
-              field: "issueDate",
+              field: "issue_date",
               order: "desc"
             }
           ],
@@ -113,7 +118,7 @@ export default {
       temp: {
         title: '',
         author: '',
-        issueDate: new Date(),
+        issue_date: new Date(),
       },
       textMap: {
         update: 'Edit',
@@ -153,6 +158,7 @@ export default {
     createData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
+          this.temp.issue_date = this.formatDate(this.temp.issue_date)
           createArticle(this.temp).then(() => {
             this.list.unshift(this.temp)
             this.dialogFormVisible = false
@@ -166,6 +172,10 @@ export default {
         }
       })
     },
+    formatDate(date) {
+      if (!date) return ''
+      return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
+    },
     handleUpdate(row) {
       this.temp = Object.assign({}, row) // copy obj
       this.temp.timestamp = new Date(this.temp.timestamp)
@@ -178,9 +188,7 @@ export default {
     updateData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
-          const tempData = Object.assign({}, this.temp)
-          tempData.timestamp = +new Date(tempData.timestamp) // change Thu Nov 30 2017 16:41:05 GMT+0800 (CST) to 1512031311464
-          updateArticle(tempData).then(() => {
+          updateArticle(this.temp).then(() => {
             const index = this.list.findIndex(v => v.id === this.temp.id)
             this.list.splice(index, 1, this.temp)
             this.dialogFormVisible = false
@@ -195,13 +203,15 @@ export default {
       })
     },
     handleDelete(row, index) {
-      this.$notify({
-        title: 'Success',
-        message: 'Delete Successfully',
-        type: 'success',
-        duration: 2000
+      deleteArticle(row.id).then(() => {
+        this.$notify({
+              title: 'Success',
+              message: 'Delete Successfully',
+              type: 'success',
+              duration: 2000
+            })
+        this.list.splice(index, 1)
       })
-      this.list.splice(index, 1)
     },
     handleSizeChange(val) {
       this.fetchData()

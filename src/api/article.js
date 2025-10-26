@@ -7,25 +7,24 @@ export function fetchList(query) {
   );
 }
 
-export function fetchArticle(id) {
-  return request({
-    url: '/article/detail',
-    method: 'get',
-    params: { id }
-  })
-}
-
 export function createArticle(data) {
   return request.post(
-    "/article",
+    "v1/article",
     data
   );
 }
 
+export function deleteArticle(id) {
+  return request.delete("v1/article", {
+    data: {
+      id: id,
+    },
+  });
+}
+
 export function updateArticle(data) {
-  return request({
-    url: '/article',
-    method: 'put',
+  return request.put(
+    'v1/article',
     data
-  })
+  )
 }
